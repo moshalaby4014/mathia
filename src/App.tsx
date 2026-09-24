@@ -18,11 +18,25 @@ import { MathQuestRunner } from './components/quest/MathQuestRunner';
 import { PlayerHome } from './components/PlayerHome';
 import { PetRoom } from './components/PetRoom';
 import { ParentDashboard } from './components/ParentDashboard';
+import { TeachingEngine } from './components/teaching/TeachingEngine';
+import { LessonSelectHub } from './components/teaching/LessonSelectHub';
+import { CURRICULUM_LESSONS } from './services/curriculumLessons';
+import { Lesson } from './types/teaching';
 
 export default function App() {
-  const [profile, setProfile] = useState<PlayerProfile>(() => storage.loadProfile());
-  const [currentScreen, setCurrentScreen] = useState<ActiveScreen>('map');
-  const [activeWorld, setActiveWorld] = useState<WorldRegion | null>(null);
+  const [profile, setProfile] = useState<PlayerProfile>(() => {
+    const loaded = storage.loadProfile();
+    if (!loaded.unlockedWorlds.includes('time')) {
+      loaded.unlockedWorlds = Array.from(new Set([...loaded.unlockedWorlds, 'time']));
+      storage.saveProfile(loaded);
+    }
+    return loaded;
+  });
+
+  const timeWorld = WORLDS.find((w) => w.id === 'time') || null;
+  const [currentScreen, setCurrentScreen] = useState<ActiveScreen>('quest');
+  const [activeWorld, setActiveWorld] = useState<WorldRegion | null>(timeWorld);
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
 
   const [isMuted, setIsMuted] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
@@ -114,7 +128,42 @@ export default function App() {
       {/* Main Viewport Content */}
       <main className="flex-1 w-full max-w-6xl mx-auto flex flex-col justify-start">
         {currentScreen === 'map' && (
-          <WorldMap profile={profile} onSelectWorld={handleSelectWorld} />
+          <WorldMap
+            profile={profile}
+            onSelectWorld={handleSelectWorld}
+            onOpenTeachingLab={() => {
+              setSelectedLesson(null);
+              setCurrentScreen('teaching');
+            }}
+          />
+        )}
+
+        {currentScreen === 'teaching' && (
+          selectedLesson ? (
+            <TeachingEngine
+              lesson={selectedLesson}
+              profile={profile}
+              onUpdateProfile={(updated) => {
+                setProfile(updated);
+                storage.saveProfile(updated);
+              }}
+              onReturnToMap={() => setSelectedLesson(null)}
+              onSelectNextLesson={() => {
+                const currentIndex = CURRICULUM_LESSONS.findIndex((l) => l.id === selectedLesson.id);
+                if (currentIndex >= 0 && currentIndex < CURRICULUM_LESSONS.length - 1) {
+                  setSelectedLesson(CURRICULUM_LESSONS[currentIndex + 1]);
+                } else {
+                  setSelectedLesson(null);
+                }
+              }}
+            />
+          ) : (
+            <LessonSelectHub
+              profile={profile}
+              onSelectLesson={(lesson) => setSelectedLesson(lesson)}
+              onReturnToMap={() => setCurrentScreen('map')}
+            />
+          )
         )}
 
         {currentScreen === 'quest' && activeWorld && (
@@ -162,10 +211,15 @@ export default function App() {
       </main>
 
       {/* Bottom Navigation for Children */}
-      {currentScreen !== 'quest' && (
+      {currentScreen !== 'quest' && !(currentScreen === 'teaching' && selectedLesson) && (
         <BottomNav
           currentScreen={currentScreen}
-          onSelectScreen={(screen) => setCurrentScreen(screen)}
+          onSelectScreen={(screen) => {
+            if (screen === 'teaching') {
+              setSelectedLesson(null);
+            }
+            setCurrentScreen(screen);
+          }}
         />
       )}
     </div>

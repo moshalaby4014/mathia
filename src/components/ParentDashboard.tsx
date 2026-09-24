@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PlayerProfile, SkillMasteryRecord } from '../types/game';
 import { GRADE_2_SKILLS, MISCONCEPTIONS_CATALOG } from '../services/curriculum';
+import { CURRICULUM_LESSONS } from '../services/curriculumLessons';
 import { storage } from '../services/storage';
 import { sound } from '../services/audio';
 import {
@@ -248,6 +249,49 @@ export const ParentDashboard: React.FC<Props> = ({
                         {mastery.label}
                       </span>
                     </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Interactive Teaching Engine Lab Lessons Progress */}
+          <div className="bg-purple-50 border-2 border-purple-200 rounded-2xl p-4 sm:p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-purple-950 font-black text-base">
+                <Sparkles className="w-5 h-5 text-purple-600" />
+                <span>دروس مختبر المفاهيم والاستراتيجيات التفاعلية</span>
+              </div>
+              <span className="text-xs font-bold text-purple-700">
+                14 درساً تفاعلياً عملياً
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {CURRICULUM_LESSONS.map((lesson) => {
+                const record = masteryData[lesson.id];
+                const mastery = getMasteryColor(record?.masteryLevel);
+
+                return (
+                  <div
+                    key={lesson.id}
+                    className="bg-white p-2.5 rounded-xl border border-purple-200 flex items-center justify-between gap-2 text-right"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{lesson.icon}</span>
+                      <div>
+                        <div className="text-xs font-black text-slate-800">
+                          {lesson.titleAr}
+                        </div>
+                        <div className="text-[10px] font-bold text-slate-400">
+                          {lesson.subtitleAr}
+                        </div>
+                      </div>
+                    </div>
+
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${mastery.bg}`}>
+                      {mastery.label}
+                    </span>
                   </div>
                 );
               })}

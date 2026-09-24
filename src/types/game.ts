@@ -108,4 +108,4 @@ export interface Pet {
   unlockedByDefault?: boolean;
 }
 
-export type ActiveScreen = 'intro' | 'map' | 'quest' | 'home' | 'pets' | 'parent';
+export type ActiveScreen = 'intro' | 'map' | 'quest' | 'home' | 'pets' | 'parent' | 'teaching';

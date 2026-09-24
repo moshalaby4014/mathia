@@ -7,9 +7,10 @@ import { sound } from '../services/audio';
 interface Props {
   profile: PlayerProfile;
   onSelectWorld: (world: WorldRegion) => void;
+  onOpenTeachingLab?: () => void;
 }
 
-export const WorldMap: React.FC<Props> = ({ profile, onSelectWorld }) => {
+export const WorldMap: React.FC<Props> = ({ profile, onSelectWorld, onOpenTeachingLab }) => {
   const isWorldCompleted = (worldId: string) => {
     if (worldId === 'forest') return profile.crystals.forest;
     if (worldId === 'addition') return profile.crystals.addition;
@@ -24,8 +25,8 @@ export const WorldMap: React.FC<Props> = ({ profile, onSelectWorld }) => {
   };
 
   const isWorldUnlocked = (world: WorldRegion) => {
-    // Forest is always unlocked. Others unlock with star count or previous completion
-    if (world.id === 'forest') return true;
+    // Forest and Time are unlocked by default
+    if (world.id === 'forest' || world.id === 'time') return true;
     return profile.stars >= world.requiredStars || profile.unlockedWorlds.includes(world.id);
   };
 
@@ -83,6 +84,40 @@ export const WorldMap: React.FC<Props> = ({ profile, onSelectWorld }) => {
           </div>
         </div>
       </div>
+
+      {/* Interactive Teaching Engine Lab Portal Banner */}
+      {onOpenTeachingLab && (
+        <div
+          onClick={() => {
+            sound.playSfx('sparkle');
+            onOpenTeachingLab();
+          }}
+          className="w-full max-w-4xl bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 rounded-3xl p-4 sm:p-5 shadow-xl border-4 border-amber-300 text-white mb-6 cursor-pointer hover:scale-[1.01] transition-all flex flex-col sm:flex-row items-center justify-between gap-4 group"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl shadow-inner group-hover:rotate-12 transition-transform shrink-0">
+              🧪
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-1.5 bg-amber-400 text-amber-950 font-black text-xs px-2.5 py-0.5 rounded-full mb-1">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>المنهج التفاعلي الحديث — الصف الثاني</span>
+              </div>
+              <h3 className="text-lg sm:text-xl font-black">
+                مختبر الرياضيات التفاعلي (Interactive Math Lab)
+              </h3>
+              <p className="text-xs sm:text-sm text-purple-100 font-bold">
+                استكشف الجمع والطرح بخط الأعداد، وإطار العشرة، وقيم الخانات، وسر "ليه؟" مع ميرو!
+              </p>
+            </div>
+          </div>
+
+          <div className="px-5 py-2.5 bg-white text-indigo-950 font-black text-xs sm:text-sm rounded-2xl shadow-md group-hover:bg-amber-300 transition-colors flex items-center gap-1 shrink-0">
+            <span>دخول المختبر</span>
+            <ChevronLeft className="w-4 h-4" />
+          </div>
+        </div>
+      )}
 
       {/* Illustrated Kingdom Landscape Canvas Container */}
       <div className="relative w-full max-w-4xl bg-gradient-to-b from-sky-200 via-amber-100 to-emerald-200 rounded-3xl border-4 border-amber-300 shadow-2xl p-4 sm:p-8 min-h-[580px] overflow-hidden">

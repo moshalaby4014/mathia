@@ -31,7 +31,7 @@ export const DEFAULT_PROFILE: PlayerProfile = {
     mixed: false,
     castle: false,
   },
-  unlockedWorlds: ['forest'],
+  unlockedWorlds: ['forest', 'time'],
   activePetId: 'fennec',
   unlockedPets: ['fennec'],
   homeItems: ['cozy_bed', 'plant_pot'],
@@ -47,14 +47,18 @@ export const storage = {
       if (!data) return DEFAULT_PROFILE;
       const parsed = JSON.parse(data);
       // Merge with defaults in case of new schema keys
-      return {
+      const profile: PlayerProfile = {
         ...DEFAULT_PROFILE,
         ...parsed,
         crystals: {
           ...DEFAULT_PROFILE.crystals,
           ...(parsed.crystals || {}),
         },
+        unlockedWorlds: Array.from(
+          new Set([...(parsed.unlockedWorlds || ['forest']), 'time'])
+        ),
       };
+      return profile;
     } catch {
       return DEFAULT_PROFILE;
     }
