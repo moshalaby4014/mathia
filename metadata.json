@@ -1,0 +1,6 @@
+{
+  "name": "Mathia — مملكة الأرقام",
+  "description": "لعبة مغامرات تعليمية عربية في الرياضيات لطلاب الصف الثاني الابتدائي — اكتشف مملكة الأرقام وأنقذ البلورات السحرية!",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
