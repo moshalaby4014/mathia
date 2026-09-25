@@ -10,6 +10,7 @@ interface Props {
   onToggleSound: () => void;
   onOpenParentGate: () => void;
   onOpenAvatarCustomizer: () => void;
+  onOpenCertificates?: () => void;
 }
 
 export const Navbar: React.FC<Props> = ({
@@ -18,6 +19,7 @@ export const Navbar: React.FC<Props> = ({
   onToggleSound,
   onOpenParentGate,
   onOpenAvatarCustomizer,
+  onOpenCertificates,
 }) => {
   const crystalCount = Object.values(profile.crystals).filter(Boolean).length;
   const xpPercent = Math.min(100, Math.round((profile.xp / profile.xpToNextLevel) * 100));
@@ -79,6 +81,21 @@ export const Navbar: React.FC<Props> = ({
             <Coins className="w-4 h-4 text-yellow-600 fill-yellow-400" />
             <span className="text-xs sm:text-sm font-black">{profile.coins}</span>
           </div>
+
+          {/* Royal Medals / Certificates Button */}
+          {onOpenCertificates && (
+            <button
+              onClick={() => {
+                sound.playSfx('click');
+                onOpenCertificates();
+              }}
+              className="flex items-center gap-1 bg-gradient-to-r from-amber-200 to-yellow-300 hover:from-amber-300 hover:to-yellow-400 border-2 border-amber-400 rounded-full px-2.5 sm:px-3 py-1 text-amber-950 shadow-sm active:scale-95 transition-all cursor-pointer"
+              title="قاعة الأوسمة والشهادات الملكية"
+            >
+              <Award className="w-4 h-4 text-amber-800" />
+              <span className="text-xs sm:text-sm font-black hidden sm:inline">أوسمتي</span>
+            </button>
+          )}
         </div>
 
         {/* Right: Controls (Sound toggle, Parent Gate) */}

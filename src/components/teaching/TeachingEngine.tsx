@@ -14,6 +14,8 @@ import { FactFamilyEngine } from './manipulatives/FactFamilyEngine';
 import { Chart120Engine } from './manipulatives/Chart120Engine';
 import { InteractiveClockEngine } from './manipulatives/InteractiveClockEngine';
 import { RulerEngine } from './manipulatives/RulerEngine';
+import { ParentGuideModal } from './ParentGuideModal';
+import { getParentGuideForLesson } from '../../services/parentGuideService';
 import confetti from 'canvas-confetti';
 import {
   HelpCircle,
@@ -27,6 +29,7 @@ import {
   Star,
   Award,
   BookOpen,
+  HeartHandshake,
 } from 'lucide-react';
 
 interface Props {
@@ -53,6 +56,9 @@ export const TeachingEngine: React.FC<Props> = ({
   // Modals
   const [showWhyModal, setShowWhyModal] = useState(false);
   const [showShowMeHowModal, setShowShowMeHowModal] = useState(false);
+  const [showParentGuide, setShowParentGuide] = useState(false);
+
+  const parentGuide = lesson.parentGuide || getParentGuideForLesson(lesson.id);
 
   // Activity interaction state
   const [isActivityCompleted, setIsActivityCompleted] = useState(false);
@@ -327,8 +333,16 @@ export const TeachingEngine: React.FC<Props> = ({
         />
       )}
 
+      {showParentGuide && (
+        <ParentGuideModal
+          titleAr={lesson.titleAr}
+          guide={parentGuide}
+          onClose={() => setShowParentGuide(false)}
+        />
+      )}
+
       {/* Top Breadcrumb Bar */}
-      <div className="w-full flex items-center justify-between gap-2 mb-4">
+      <div className="w-full flex items-center justify-between gap-2 mb-4 flex-wrap">
         <button
           onClick={onReturnToMap}
           className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/80 hover:bg-white text-slate-700 font-bold text-xs sm:text-sm border border-slate-300 shadow-sm transition"
@@ -337,7 +351,20 @@ export const TeachingEngine: React.FC<Props> = ({
           <span>العودة للخريطة</span>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Parent Guide Button */}
+          <button
+            onClick={() => {
+              sound.playSfx('sparkle');
+              setShowParentGuide(true);
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs sm:text-sm shadow-md transition active:scale-95 ring-2 ring-emerald-300/60"
+            title="دليل ولي الأمر لتبسيط الفكرة للطفل قبل البدء"
+          >
+            <HeartHandshake className="w-4 h-4" />
+            <span>شرح لولي الأمر 👨‍👧‍👦</span>
+          </button>
+
           {/* "وريني إزاي" Button */}
           <button
             onClick={() => {
@@ -363,6 +390,37 @@ export const TeachingEngine: React.FC<Props> = ({
             <span>ليه؟ 🤔</span>
           </button>
         </div>
+      </div>
+
+      {/* Parent Coaching Interactive Banner */}
+      <div
+        onClick={() => {
+          sound.playSfx('sparkle');
+          setShowParentGuide(true);
+        }}
+        className="w-full mb-4 bg-gradient-to-r from-amber-100 via-orange-100 to-rose-100 border-2 border-dashed border-amber-400 hover:border-amber-500 rounded-2xl p-3 sm:p-3.5 shadow-sm flex items-center justify-between gap-3 cursor-pointer group transition transform hover:-translate-y-0.5"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-xl shrink-0 border border-amber-200 group-hover:scale-110 transition">
+            👨‍👧‍👦
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs sm:text-sm font-black text-amber-950">
+                لولي الأمر: كيف تشرح "{lesson.titleAr}" لطفلك في دقيقة قبل أن يتفاعل؟
+              </span>
+              <span className="text-[10px] bg-rose-500 text-white font-black px-2 py-0.5 rounded-full animate-pulse">
+                دليل سريع
+              </span>
+            </div>
+            <p className="text-[11px] font-bold text-amber-900/80">
+              سيناريو حوار بالعامية + تجربة منزلية في البيت + أسئلة لتسخين ذهن الطفل وتجنب الأخطاء
+            </p>
+          </div>
+        </div>
+        <span className="text-xs font-black text-amber-900 bg-white/90 px-3 py-1.5 rounded-xl border border-amber-300 shadow-sm shrink-0 group-hover:bg-amber-500 group-hover:text-white transition">
+          افتح الشرح 💡
+        </span>
       </div>
 
       {/* Lesson Header Banner */}

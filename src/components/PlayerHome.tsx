@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
 import { PlayerProfile, HomeItem } from '../types/game';
 import { HOME_ITEMS_CATALOG, PETS_CATALOG } from '../services/curriculum';
+import { certificatesService } from '../services/certificatesService';
 import { CharacterAvatar } from './CharacterAvatar';
 import { sound } from '../services/audio';
 import { storage } from '../services/storage';
-import { Sparkles, ShoppingBag, Check, Plus, Coins, Trophy } from 'lucide-react';
+import { Sparkles, ShoppingBag, Check, Plus, Coins, Trophy, Award } from 'lucide-react';
 
 interface Props {
   profile: PlayerProfile;
   onUpdateProfile: (updated: PlayerProfile) => void;
+  onOpenCertificates?: () => void;
 }
 
-export const PlayerHome: React.FC<Props> = ({ profile, onUpdateProfile }) => {
+export const PlayerHome: React.FC<Props> = ({ profile, onUpdateProfile, onOpenCertificates }) => {
   const [shopOpen, setShopOpen] = useState(false);
 
   const activePet = PETS_CATALOG.find((p) => p.id === profile.activePetId) || PETS_CATALOG[0];
+  const unlockedCertCount = certificatesService.getUnlockedCertificates(profile).length;
 
   const handleBuyItem = (item: HomeItem) => {
     if (profile.coins < item.cost) {
@@ -73,10 +76,30 @@ export const PlayerHome: React.FC<Props> = ({ profile, onUpdateProfile }) => {
         </div>
 
         {/* Room Wall Decorations */}
-        <div className="flex items-start justify-end gap-4 z-10">
+        <div className="flex items-start justify-end gap-3 sm:gap-4 z-10">
+          {/* Royal Wall Frame for Certificates */}
+          <div
+            onClick={() => {
+              sound.playSfx('sparkle');
+              if (onOpenCertificates) onOpenCertificates();
+            }}
+            className="bg-gradient-to-br from-amber-100 to-yellow-200 border-2 border-amber-400 p-2 rounded-2xl shadow-md text-center cursor-pointer hover:scale-105 active:scale-95 transition-all group"
+            title="لوحة الأوسمة والشهادات الملكية"
+          >
+            <div className="relative inline-block">
+              <span className="text-3xl">📜</span>
+              <span className="absolute -top-1 -right-1 bg-amber-600 text-white text-[9px] font-black rounded-full px-1 shadow">
+                {unlockedCertCount}
+              </span>
+            </div>
+            <div className="text-[10px] font-black text-amber-950 group-hover:text-amber-700">
+              أوسمتي ({unlockedCertCount})
+            </div>
+          </div>
+
           {isOwned('papyrus_map') && (
             <div className="bg-amber-100 border-2 border-amber-400 p-2 rounded-xl shadow text-center rotate-3">
-              <span className="text-3xl">📜</span>
+              <span className="text-3xl">🗺️</span>
               <div className="text-[10px] font-black text-amber-900">خريطة البردي</div>
             </div>
           )}

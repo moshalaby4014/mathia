@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActiveScreen } from '../types/game';
-import { Map, Home, PawPrint, Sparkles } from 'lucide-react';
+import { Map, Home, PawPrint, Sparkles, Award } from 'lucide-react';
 import { sound } from '../services/audio';
 
 interface Props {
@@ -10,8 +10,9 @@ interface Props {
 
 export const BottomNav: React.FC<Props> = ({ currentScreen, onSelectScreen }) => {
   const navItems: { id: ActiveScreen; labelAr: string; icon: React.ReactNode }[] = [
-    { id: 'map', labelAr: 'خريطة المملكة', icon: <Map className="w-5 h-5 sm:w-6 sm:h-6" /> },
-    { id: 'teaching', labelAr: 'مختبر المفاهيم', icon: <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500 animate-pulse" /> },
+    { id: 'map', labelAr: 'الخريطة', icon: <Map className="w-5 h-5 sm:w-6 sm:h-6" /> },
+    { id: 'teaching', labelAr: 'المختبر', icon: <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500 animate-pulse" /> },
+    { id: 'certificates', labelAr: 'أوسمتي 📜', icon: <Award className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" /> },
     { id: 'home', labelAr: 'بيتي', icon: <Home className="w-5 h-5 sm:w-6 sm:h-6" /> },
     { id: 'pets', labelAr: 'أصدقائي', icon: <PawPrint className="w-5 h-5 sm:w-6 sm:h-6" /> },
   ];

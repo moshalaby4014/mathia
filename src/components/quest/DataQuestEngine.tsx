@@ -6,6 +6,10 @@ import { sound } from '../../services/audio';
 import { storage } from '../../services/storage';
 import { particles } from '../../services/particles';
 import { CrystalAuraCanvas } from '../CrystalAuraCanvas';
+import { ParentGuideModal } from '../teaching/ParentGuideModal';
+import { getParentGuideForWorld } from '../../services/parentGuideService';
+import { certificatesService } from '../../services/certificatesService';
+import { CertificateModal } from '../certificates/CertificateModal';
 import {
   ArrowRight,
   Sparkles,
@@ -17,6 +21,7 @@ import {
   BarChart3,
   Heart,
   Volume2,
+  HeartHandshake,
 } from 'lucide-react';
 
 interface Props {
@@ -49,6 +54,10 @@ export const DataQuestEngine: React.FC<Props> = ({
   onReturnToMap,
 }) => {
   const [stage, setStage] = useState<Stage>('intro');
+  const [showParentGuide, setShowParentGuide] = useState(false);
+  const [showCertificate, setShowCertificate] = useState(false);
+  const parentGuide = getParentGuideForWorld('forest');
+  const forestCert = certificatesService.getCertificateById('cert_forest') || certificatesService.getAllCertificates()[0];
 
   // Stage 1: Fruit Gathering State
   const [collectedCounts, setCollectedCounts] = useState<Record<string, number>>({
@@ -373,8 +382,17 @@ export const DataQuestEngine: React.FC<Props> = ({
 
   return (
     <div className="relative w-full min-h-[calc(100vh-130px)] pb-24 p-3 sm:p-6 flex flex-col items-center select-none">
+      {/* Parent Coaching Guide Modal */}
+      {showParentGuide && (
+        <ParentGuideModal
+          titleAr="غابة البيانات والتمثيل البياني"
+          guide={parentGuide}
+          onClose={() => setShowParentGuide(false)}
+        />
+      )}
+
       {/* Top Quest Header Navigation */}
-      <div className="w-full max-w-4xl flex items-center justify-between gap-2 mb-4">
+      <div className="w-full max-w-4xl flex items-center justify-between gap-2 mb-4 flex-wrap">
         <button
           onClick={() => {
             sound.playSfx('click');
@@ -386,22 +404,58 @@ export const DataQuestEngine: React.FC<Props> = ({
           <span>العودة للخريطة</span>
         </button>
 
-        {/* Stage progress pill */}
-        <div className="flex items-center gap-1 bg-amber-100 border border-amber-300 px-3 py-1 rounded-full text-xs font-black text-amber-900">
-          <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-          <span>
-            {stage === 'intro' && 'مقدمة المهمة'}
-            {stage === 'gathering' && 'المرحلة 1: جمع الفواكه'}
-            {stage === 'graph_building' && 'المرحلة 2: بناء المدرج'}
-            {stage === 'puzzle' && `المرحلة 3: الألغاز (${puzzleStep + 1}/3)`}
-            {stage === 'boss' && 'المرحلة 4: حارس الغابة'}
-            {stage === 'victory' && 'النصر واستعادة البلورة!'}
-          </span>
+        <div className="flex items-center gap-2">
+          {/* Parent Guide Button */}
+          <button
+            onClick={() => {
+              sound.playSfx('sparkle');
+              setShowParentGuide(true);
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white rounded-full text-xs font-black shadow transition active:scale-95 ring-2 ring-emerald-300/60"
+            title="دليل ولي الأمر لشرح فكرة جمع البيانات والتمثيل البياني لطفلك قبل البدء"
+          >
+            <HeartHandshake className="w-3.5 h-3.5" />
+            <span>شرح لولي الأمر 👨‍👧‍👦</span>
+          </button>
+
+          {/* Stage progress pill */}
+          <div className="flex items-center gap-1 bg-amber-100 border border-amber-300 px-3 py-1 rounded-full text-xs font-black text-amber-900">
+            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+            <span>
+              {stage === 'intro' && 'مقدمة المهمة'}
+              {stage === 'gathering' && 'المرحلة 1: جمع الفواكه'}
+              {stage === 'graph_building' && 'المرحلة 2: بناء المدرج'}
+              {stage === 'puzzle' && `المرحلة 3: الألغاز (${puzzleStep + 1}/3)`}
+              {stage === 'boss' && 'المرحلة 4: حارس الغابة'}
+              {stage === 'victory' && 'النصر واستعادة البلورة!'}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Main Adventure Stage Card */}
       <div className="w-full max-w-4xl bg-white rounded-3xl border-4 border-amber-300 shadow-2xl overflow-hidden flex flex-col p-4 sm:p-6 mb-6">
+        {/* Quick Parent Coaching Callout Banner */}
+        {stage !== 'victory' && (
+          <div
+            onClick={() => {
+              sound.playSfx('sparkle');
+              setShowParentGuide(true);
+            }}
+            className="mb-4 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-2xl p-2.5 flex items-center justify-between cursor-pointer transition select-none"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base">👨‍👧‍👦</span>
+              <span className="text-xs font-black text-emerald-950">
+                لولي الأمر: كيف تبسط فكرة تصنيف الفواكه والتمثيل البياني لطفلك قبل البدء؟
+              </span>
+            </div>
+            <span className="text-[11px] font-black text-emerald-900 bg-white px-2.5 py-0.5 rounded-lg border border-emerald-300 shadow-sm">
+              اقرأ الدليل (دقيقة واحدة) 💡
+            </span>
+          </div>
+        )}
+
         {/* Stage 0: Intro */}
         {stage === 'intro' && (
           <div className="flex flex-col items-center text-center py-6">
@@ -735,15 +789,42 @@ export const DataQuestEngine: React.FC<Props> = ({
               </div>
             </div>
 
-            <button
-              onClick={(e) => handleClaimRewardAndExit(e)}
-              className="relative z-10 game-btn-primary px-8 py-3.5 rounded-2xl text-white font-black text-lg shadow-xl"
-            >
-              استلام الجوائز والعودة للخريطة 🚀
-            </button>
+            {/* Action buttons */}
+            <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={() => {
+                  sound.playSfx('sparkle');
+                  setShowCertificate(true);
+                }}
+                className="game-btn-blue px-6 py-3 rounded-2xl text-white font-black text-sm shadow flex items-center justify-center gap-1.5"
+              >
+                <Award className="w-5 h-5 text-yellow-300" />
+                <span>معاينة وطباعة وسام البيانات 📜✨</span>
+              </button>
+
+              <button
+                onClick={(e) => handleClaimRewardAndExit(e)}
+                className="game-btn-primary px-8 py-3 rounded-2xl text-white font-black text-base shadow-xl"
+              >
+                استلام الجوائز والعودة للخريطة 🚀
+              </button>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Royal Certificate Modal on Forest Victory */}
+      {showCertificate && forestCert && (
+        <CertificateModal
+          certificate={forestCert}
+          profile={profile}
+          onClose={() => setShowCertificate(false)}
+          onUpdateName={(newName) => {
+            const updated = { ...profile, name: newName };
+            onUpdateProfile(updated);
+          }}
+        />
+      )}
 
       {/* Companion Miro Box at the bottom */}
       <MiroCompanion

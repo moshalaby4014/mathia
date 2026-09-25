@@ -3,8 +3,12 @@ import { WorldRegion, PlayerProfile } from '../../types/game';
 import { MiroCompanion } from '../MiroCompanion';
 import { sound } from '../../services/audio';
 import { storage } from '../../services/storage';
+import { ParentGuideModal } from '../teaching/ParentGuideModal';
+import { getParentGuideForWorld } from '../../services/parentGuideService';
+import { certificatesService } from '../../services/certificatesService';
+import { CertificateModal } from '../certificates/CertificateModal';
 import confetti from 'canvas-confetti';
-import { ArrowRight, Sparkles, CheckCircle2, Star, Trophy } from 'lucide-react';
+import { ArrowRight, Sparkles, CheckCircle2, Star, Trophy, HeartHandshake, Award } from 'lucide-react';
 
 interface Props {
   world: WorldRegion;
@@ -31,6 +35,14 @@ export const MathQuestRunner: React.FC<Props> = ({
   const [isDone, setIsDone] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [showParentGuide, setShowParentGuide] = useState(false);
+  const [showCertificate, setShowCertificate] = useState(false);
+
+  const matchedCert =
+    certificatesService.getAllCertificates().find((c) => c.worldId === world.id) ||
+    certificatesService.getAllCertificates()[0];
+
+  const parentGuide = getParentGuideForWorld(world.id);
 
   // Generate customized questions based on world
   const getQuestions = (): QuestionItem[] => {
@@ -94,15 +106,112 @@ export const MathQuestRunner: React.FC<Props> = ({
           },
         ];
 
-      case 'measurement':
+      case 'subtraction':
         return [
           {
-            prompt: 'استخدمنا المسطرة لقياس قلم البردي، بدأت المسطرة من الرقم 0 وانتهى القلم عند الرقم 14 سم. ما طول القلم؟',
-            visual: '📏 [0 --------- 14 سم]',
+            prompt: 'في كهف الطرح، نريد حل المسألة الرأسية: 42 − 18. نطرح الآحاد أولاً (2 − 8)، هل يجوز؟',
+            visual: '📝 42 − 18 = ?',
             choices: [
-              { text: '14 سنتيمتراً ✍️', correct: true, feedback: 'رائع! القياس يبدأ من الصفر، وطرفه عند 14 سم.' },
-              { text: '10 سنتيمترات', correct: false, feedback: 'انظر للرقم الذي يقف عنده طرف القلم بالضبط.' },
-              { text: '15 سنتيمتراً', correct: false, feedback: 'الرقم المشار إليه هو 14 سم.' },
+              { text: 'لا، نستلف 1 عشرة من 4 فتصبح الآحاد 12', correct: true, feedback: 'ممتاز! 12 − 8 = 4 في الآحاد، ثم 3 − 1 = 2 في العشرات، الناتج 24!' },
+              { text: 'نعم ونقول 8 − 2 = 6', correct: false, feedback: 'انتبه! لا يجوز عكس الطرح، بل نستلف عشرة ونفكها!' },
+              { text: 'نكتب 0 في الآحاد', correct: false, feedback: 'لا نكتب صفراً، بل نستلف من خانة العشرات!' },
+            ],
+          },
+          {
+            prompt: 'حل المسألة الرأسية وتحقق من إجابتك: 53 − 27 = ؟',
+            visual: '🦇 53 − 27 = 26',
+            choices: [
+              { text: '26 (والتحقق: 26 + 27 = 53)', correct: true, feedback: 'عبقري! استلفنا 1 للآحاد فصارت 13 − 7 = 6، و 4 − 2 = 2، وتحققنا بالجمع العكسي!' },
+              { text: '34', correct: false, feedback: 'تذكر أن العشرات نقصت 1 بعد الاستلاف فأصبحت 4!' },
+              { text: '36', correct: false, feedback: 'اجمع 36 + 27 = 63، إذن ليست 53!' },
+            ],
+          },
+        ];
+
+      case 'numbers':
+        return [
+          {
+            prompt: 'في واحة الأعداد أكبر من 100: ما هو العدد المكون من 3 مئات و 5 عشرات و 4 آحاد؟',
+            visual: '🧱 3 مئات + 5 عشرات + 4 آحاد',
+            choices: [
+              { text: '354', correct: true, feedback: 'صحيح! 3 في المئات (300)، 5 في العشرات (50)، 4 في الآحاد (4)!' },
+              { text: '345', correct: false, feedback: 'انتبه: 5 عشرات و 4 آحاد تعني 54!' },
+              { text: '534', correct: false, feedback: 'المئات 3 وليست 5!' },
+            ],
+          },
+          {
+            prompt: 'قارن بين العددين: 462 و 426. أي علامة هي الصحيحة؟',
+            visual: '⚖️ 462 [ ? ] 426',
+            choices: [
+              { text: '462 > 426 (أكبر من)', correct: true, feedback: 'بطل! المئات متساوية (4=4)، فننظر للعشرات: 6 عشرات أكبر من 2 عشرات!' },
+              { text: '462 < 426 (أصغر من)', correct: false, feedback: 'قارن خانة العشرات جيداً: 6 أكبر من 2!' },
+              { text: '462 = 426 (يساوي)', correct: false, feedback: 'العددان غير متساويين!' },
+            ],
+          },
+        ];
+
+      case 'capacity':
+        return [
+          {
+            prompt: 'في مختبر السعة: أي من هذه الأشياء نقيس سعته باللتر (ل)؟',
+            visual: '🧪 اللتر (ل) مقابل المليلتر (مل)',
+            choices: [
+              { text: 'زجاجة مياه الشرب الكبيرة 💧', correct: true, feedback: 'ممتاز! اللتر لقياس السعات الكبيرة كزجاجات المياه والحليب!' },
+              { text: 'ملعقة الدواء الصغيرة', correct: false, feedback: 'الملعقة كمية صغيرة جداً تقاس بالمليلتر (مل)!' },
+              { text: 'قطارة العين', correct: false, feedback: 'القطارة تقاس بالمليلتر!' },
+            ],
+          },
+          {
+            prompt: 'اللتر الواحد يحتوي على كم مليلتر؟',
+            visual: '🥛 1 لتر = ؟ مليلتر',
+            choices: [
+              { text: '1000 مليلتر', correct: true, feedback: 'إجابة صحيحة 100%! 1 ل = 1000 مل!' },
+              { text: '100 مليلتر', correct: false, feedback: 'اللتر يساوي ألف (1000) مليلتر!' },
+              { text: '10 مليلتر', correct: false, feedback: '10 مل ملعقة دواء صغيرة فقط!' },
+            ],
+          },
+        ];
+
+      case 'mixed':
+        return [
+          {
+            prompt: 'اشترى تاجر السوق بضاعة بقيمة 35 جنيهاً ثم باع جزءاً منها، وتبقت معه بضاعة بـ 18 جنيهاً. لحساب قيمة ما باعه، نستخدم أي مسألة؟',
+            visual: '🏛️ 35 − 18 = ؟',
+            choices: [
+              { text: 'الطرح الرأسي: 35 − 18 = 17 جنيهاً', correct: true, feedback: 'أحسنت! لحساب الفرق أو المتبقي نطرح رأسياً: 35 − 18 = 17!' },
+              { text: 'الجمع: 35 + 18 = 53', correct: false, feedback: 'المتبقي يعني طرح ما تم صرفه أو بيعه!' },
+              { text: 'الطرح: 35 − 10 = 25', correct: false, feedback: 'المتبقي 18 وليس 10!' },
+            ],
+          },
+          {
+            prompt: 'تحقق من صحة المسألة الرأسية: 48 + 25 = 73. كيف نتحقق بالطرح؟',
+            visual: '🔄 التحقق بالعلاقة العكسية',
+            choices: [
+              { text: '73 − 25 = 48 (إذن الحل صحيح)', correct: true, feedback: 'عبقري! الجمع والطرح عمليتان عكسيتان نتحقق بهما دائماً!' },
+              { text: '48 − 25 = 23', correct: false, feedback: 'للتحقق نطرح أحد المجموعين من الناتج الكلي!' },
+              { text: '73 + 25 = 98', correct: false, feedback: 'التحقق من الجمع يكون بالطرح!' },
+            ],
+          },
+        ];
+
+      case 'castle':
+        return [
+          {
+            prompt: 'في عرش الحساب الذهني: نريد جمع 48 + 26 ذهنياً وسريعاً، ما هي أذكى طريقة؟',
+            visual: '⚡ الحساب الذهني الذكي',
+            choices: [
+              { text: 'نأخذ 2 من 26 نضيفها لـ 48 لتصبح 50، فيكون 50 + 24 = 74', correct: true, feedback: 'فائق الذكاء! صنعنا 50 كاملة سهلة الجمع في ثانية واحدة!' },
+              { text: 'نعد على أصابعنا من 48 حتى 26', correct: false, feedback: 'العد بالأصابع بطيء ويتعرض للخطأ في الأرقام الكبيرة!' },
+              { text: 'نقول الناتج 64 بدون حساب', correct: false, feedback: '40 + 20 = 60، و 8 + 6 = 14، إذن 74!' },
+            ],
+          },
+          {
+            prompt: 'ما هو مكمل العدد 70 ليصبح 100 ذهنياً؟',
+            visual: '👑 70 + ؟ = 100',
+            choices: [
+              { text: '30', correct: true, feedback: 'صحيح وسريع كالبرق! 7 عشرات + 3 عشرات = 10 عشرات (100)!' },
+              { text: '40', correct: false, feedback: '70 + 40 = 110!' },
+              { text: '20', correct: false, feedback: '70 + 20 = 90!' },
             ],
           },
         ];
@@ -172,8 +281,17 @@ export const MathQuestRunner: React.FC<Props> = ({
 
   return (
     <div className="relative w-full min-h-[calc(100vh-130px)] pb-24 p-3 sm:p-6 flex flex-col items-center select-none">
+      {/* Parent Guide Modal */}
+      {showParentGuide && (
+        <ParentGuideModal
+          titleAr={world.titleAr || world.nameAr}
+          guide={parentGuide}
+          onClose={() => setShowParentGuide(false)}
+        />
+      )}
+
       {/* Header */}
-      <div className="w-full max-w-2xl flex items-center justify-between mb-4">
+      <div className="w-full max-w-2xl flex items-center justify-between mb-4 flex-wrap gap-2">
         <button
           onClick={() => {
             sound.playSfx('click');
@@ -185,15 +303,49 @@ export const MathQuestRunner: React.FC<Props> = ({
           <span>الخريطة</span>
         </button>
 
-        <span className="text-xs sm:text-sm font-black bg-amber-100 text-amber-900 px-3 py-1 rounded-full border border-amber-300">
-          {world.nameAr} 🌟
-        </span>
+        <div className="flex items-center gap-2">
+          {/* Parent Guide Trigger Button */}
+          <button
+            onClick={() => {
+              sound.playSfx('sparkle');
+              setShowParentGuide(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white rounded-full text-xs font-black shadow transition active:scale-95 ring-2 ring-emerald-300/60"
+            title="دليل ولي الأمر لشرح الفكرة للطفل قبل البدء"
+          >
+            <HeartHandshake className="w-3.5 h-3.5" />
+            <span>شرح لولي الأمر 👨‍👧‍👦</span>
+          </button>
+
+          <span className="text-xs sm:text-sm font-black bg-amber-100 text-amber-900 px-3 py-1 rounded-full border border-amber-300">
+            {world.nameAr} 🌟
+          </span>
+        </div>
       </div>
 
       {/* Main Challenge Card */}
-      <div className="w-full max-w-2xl bg-white rounded-3xl border-4 border-amber-300 shadow-2xl p-6 text-right space-y-5">
+      <div className="w-full max-w-2xl bg-white rounded-3xl border-4 border-amber-300 shadow-2xl p-6 text-right space-y-4">
         {!isDone ? (
           <>
+            {/* Quick Parent Coaching Pill Banner */}
+            <div
+              onClick={() => {
+                sound.playSfx('sparkle');
+                setShowParentGuide(true);
+              }}
+              className="bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-2xl p-2.5 flex items-center justify-between cursor-pointer transition"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-base">👨‍👧‍👦</span>
+                <span className="text-xs font-black text-amber-950">
+                  لولي الأمر: كيف تبسط فكرة "{world.nameAr}" لطفلك قبل أن يجيب؟
+                </span>
+              </div>
+              <span className="text-[11px] font-black text-amber-800 bg-white px-2 py-0.5 rounded-lg border border-amber-300">
+                اقرأ الشرح (دقيقة واحدة) 💡
+              </span>
+            </div>
+
             <div>
               <span className="text-xs font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">
                 السؤال ({currentIdx + 1} من {questions.length})
@@ -334,15 +486,41 @@ export const MathQuestRunner: React.FC<Props> = ({
               أعدت جزءاً من نور المملكة وحصلت على مكافآت جديدة!
             </p>
 
-            <button
-              onClick={handleCompleteQuest}
-              className="game-btn-primary px-8 py-3 rounded-2xl text-white font-black text-base shadow"
-            >
-              استلام الجوائز والعودة 🚀
-            </button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <button
+                onClick={() => {
+                  sound.playSfx('sparkle');
+                  setShowCertificate(true);
+                }}
+                className="game-btn-blue px-6 py-3 rounded-2xl text-white font-black text-sm shadow flex items-center justify-center gap-1.5"
+              >
+                <Award className="w-5 h-5 text-yellow-300" />
+                <span>معاينة وطباعة وسام الإنجاز 📜✨</span>
+              </button>
+
+              <button
+                onClick={handleCompleteQuest}
+                className="game-btn-primary px-8 py-3 rounded-2xl text-white font-black text-base shadow"
+              >
+                استلام الجوائز والعودة 🚀
+              </button>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Royal Certificate Modal on Quest Victory */}
+      {showCertificate && matchedCert && (
+        <CertificateModal
+          certificate={matchedCert}
+          profile={profile}
+          onClose={() => setShowCertificate(false)}
+          onUpdateName={(newName) => {
+            const updated = { ...profile, name: newName };
+            onUpdateProfile(updated);
+          }}
+        />
+      )}
 
       <div className="mt-4 w-full max-w-2xl">
         <MiroCompanion

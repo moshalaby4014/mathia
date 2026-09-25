@@ -66,6 +66,15 @@ export interface ActivityStep {
   misconceptionMap?: Record<string, { tag: string; feedbackAr: string; remedyWorkshopId?: string }>;
 }
 
+export interface ParentCoachingGuide {
+  conceptSummary: string;
+  howToExplainInOneMinute: string;
+  homeActivity: string;
+  questionsBeforePlaying: string[];
+  commonPitfall: string;
+  encouragementPhrase: string;
+}
+
 export interface Lesson {
   id: string;
   titleAr: string;
@@ -78,6 +87,7 @@ export interface Lesson {
   objectiveAr: string;
   prerequisitesAr: string[];
   supportedRepresentations: MathRepresentation[];
+  parentGuide?: ParentCoachingGuide;
   storyIntro: {
     characterName: string;
     scenarioAr: string;

@@ -74,8 +74,10 @@ export interface Skill {
 
 export interface WorldRegion {
   id: string;
+  chapterNumber?: number;
   nameAr: string;
   titleAr: string;
+  chapterSubtitleAr?: string;
   descriptionAr: string;
   themeColor: string;
   requiredStars: number;
@@ -108,4 +110,25 @@ export interface Pet {
   unlockedByDefault?: boolean;
 }
 
-export type ActiveScreen = 'intro' | 'map' | 'quest' | 'home' | 'pets' | 'parent' | 'teaching';
+export type ActiveScreen = 'intro' | 'map' | 'quest' | 'home' | 'pets' | 'parent' | 'teaching' | 'certificates' | 'selakh';
+
+export type RoyalSealType = 'horus' | 'lion' | 'pyramid' | 'star' | 'lotus' | 'crown';
+
+export interface RoyalCertificate {
+  id: string;
+  worldId?: string;
+  category: 'world' | 'mastery' | 'royal_honor';
+  titleAr: string;
+  shortTitleAr: string;
+  subtitleAr: string;
+  descriptionAr: string;
+  citationAr: string;
+  icon: string;
+  sealDefault: RoyalSealType;
+  badgeBg: string;
+  ribbonColor: string;
+  borderTheme: 'gold' | 'emerald' | 'amber' | 'purple' | 'sapphire' | 'royal';
+  requiredConditionAr: string;
+  isUnlocked: (profile: PlayerProfile) => boolean;
+}
+

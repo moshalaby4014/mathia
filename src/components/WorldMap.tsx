@@ -1,16 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { WorldRegion, PlayerProfile } from '../types/game';
 import { WORLDS } from '../services/curriculum';
-import { Lock, Star, Sparkles, CheckCircle2, ChevronLeft, Trophy } from 'lucide-react';
+import { Lock, Star, Sparkles, CheckCircle2, ChevronLeft, Trophy, HeartHandshake } from 'lucide-react';
 import { sound } from '../services/audio';
+import { ParentGuideModal } from './teaching/ParentGuideModal';
+import { getParentGuideForWorld } from '../services/parentGuideService';
+import { TextbookCurriculumIndex } from './TextbookCurriculumIndex';
+import { SelakhAlTelmeezHub } from './selakh/SelakhAlTelmeezHub';
 
 interface Props {
   profile: PlayerProfile;
   onSelectWorld: (world: WorldRegion) => void;
   onOpenTeachingLab?: () => void;
+  onUpdateProfile?: (updated: PlayerProfile) => void;
 }
 
-export const WorldMap: React.FC<Props> = ({ profile, onSelectWorld, onOpenTeachingLab }) => {
+export const WorldMap: React.FC<Props> = ({
+  profile,
+  onSelectWorld,
+  onOpenTeachingLab,
+  onUpdateProfile,
+}) => {
+  const [viewMode, setViewMode] = useState<'curriculum' | 'map' | 'selakh'>('curriculum');
+  const [previewWorldGuide, setPreviewWorldGuide] = useState<WorldRegion | null>(null);
   const isWorldCompleted = (worldId: string) => {
     if (worldId === 'forest') return profile.crystals.forest;
     if (worldId === 'addition') return profile.crystals.addition;
@@ -41,8 +53,82 @@ export const WorldMap: React.FC<Props> = ({ profile, onSelectWorld, onOpenTeachi
   };
 
   return (
-    <div className="relative w-full min-h-[calc(100vh-130px)] pb-24 p-3 sm:p-6 flex flex-col items-center select-none overflow-x-hidden">
-      {/* World Map Header Banner */}
+    <div className="relative w-full min-h-[calc(100vh-130px)] pb-24 p-2 sm:p-6 flex flex-col items-center select-none overflow-x-hidden">
+      {/* Parent Guide Modal */}
+      {previewWorldGuide && (
+        <ParentGuideModal
+          titleAr={previewWorldGuide.titleAr || previewWorldGuide.nameAr}
+          guide={getParentGuideForWorld(previewWorldGuide.id)}
+          onClose={() => setPreviewWorldGuide(null)}
+        />
+      )}
+
+      {/* View Mode Switcher Tab (Textbook 9 Chapters vs Selakh Al-Telmeez vs Kingdom Map) */}
+      <div className="w-full max-w-4xl flex items-center justify-center gap-1.5 sm:gap-2 mb-4 bg-amber-100/90 p-1.5 rounded-2xl border-2 border-amber-300 shadow-sm flex-wrap">
+        <button
+          onClick={() => {
+            sound.playSfx('click');
+            setViewMode('curriculum');
+          }}
+          className={`flex-1 py-2 px-2.5 sm:px-3 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all whitespace-nowrap ${
+            viewMode === 'curriculum'
+              ? 'bg-amber-500 text-white shadow-md scale-102 ring-2 ring-amber-300'
+              : 'text-amber-950 hover:bg-amber-200/60'
+          }`}
+        >
+          <span>🎒 فصول الكتاب (٩ فصول)</span>
+        </button>
+
+        <button
+          onClick={() => {
+            sound.playSfx('click');
+            setViewMode('selakh');
+          }}
+          className={`flex-1 py-2 px-2.5 sm:px-3 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all whitespace-nowrap ${
+            viewMode === 'selakh'
+              ? 'bg-emerald-600 text-white shadow-md scale-102 ring-2 ring-yellow-400'
+              : 'text-emerald-950 hover:bg-emerald-100 bg-white/70 border border-emerald-300'
+          }`}
+        >
+          <span className="text-base">📚</span>
+          <span>سلاح التلميذ التفاعلي</span>
+          <span className="text-[10px] bg-yellow-400 text-emerald-950 px-1.5 py-0.2 rounded-full font-black">
+            جديد
+          </span>
+        </button>
+
+        <button
+          onClick={() => {
+            sound.playSfx('click');
+            setViewMode('map');
+          }}
+          className={`flex-1 py-2 px-2.5 sm:px-3 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all whitespace-nowrap ${
+            viewMode === 'map'
+              ? 'bg-amber-500 text-white shadow-md scale-102 ring-2 ring-amber-300'
+              : 'text-amber-950 hover:bg-amber-200/60'
+          }`}
+        >
+          <span>🗺️ خريطة المغامرة</span>
+        </button>
+      </div>
+
+      {/* Render either Textbook Curriculum Index, Selakh Al-Telmeez Hub, or Kingdom Landscape Map */}
+      {viewMode === 'selakh' ? (
+        <SelakhAlTelmeezHub
+          profile={profile}
+          onUpdateProfile={onUpdateProfile || (() => {})}
+          onReturnToMap={() => setViewMode('map')}
+        />
+      ) : viewMode === 'curriculum' ? (
+        <TextbookCurriculumIndex
+          profile={profile}
+          onSelectWorld={onSelectWorld}
+          onOpenTeachingLab={onOpenTeachingLab}
+          onOpenSelakh={() => setViewMode('selakh')}
+        />
+      ) : (
+        <>
+          {/* World Map Header Banner */}
       <div className="w-full max-w-4xl bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 rounded-3xl p-4 sm:p-6 shadow-xl border-4 border-amber-200 text-white mb-6 relative overflow-hidden">
         {/* Subtle Egyptian decorative pattern */}
         <div className="absolute -left-10 -bottom-10 text-8xl opacity-20 pointer-events-none">
@@ -212,15 +298,30 @@ export const WorldMap: React.FC<Props> = ({ profile, onSelectWorld, onOpenTeachi
                 </div>
 
                 {/* Card Bottom CTA bar */}
-                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
                   <span className="text-xs font-black text-slate-500">
                     {unlocked ? world.bossNameAr : `تحتاج ${world.requiredStars} نجوم لفتح العالم`}
                   </span>
 
                   {unlocked && (
-                    <div className="flex items-center gap-1 text-amber-700 text-xs font-black group-hover:-translate-x-1 transition-transform">
-                      <span>دخول</span>
-                      <ChevronLeft className="w-4 h-4" />
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          sound.playSfx('sparkle');
+                          setPreviewWorldGuide(world);
+                        }}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-black transition active:scale-95"
+                        title="عرض دليل ولي الأمر لتبسيط الفكرة قبل البدء"
+                      >
+                        <HeartHandshake className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>شرح لولي الأمر 💡</span>
+                      </button>
+
+                      <div className="flex items-center gap-1 text-amber-700 text-xs font-black group-hover:-translate-x-1 transition-transform bg-amber-100 hover:bg-amber-200 px-3 py-1 rounded-xl">
+                        <span>دخول</span>
+                        <ChevronLeft className="w-4 h-4" />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -229,6 +330,8 @@ export const WorldMap: React.FC<Props> = ({ profile, onSelectWorld, onOpenTeachi
           })}
         </div>
       </div>
-    </div>
+    </>
+  )}
+</div>
   );
 };

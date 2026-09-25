@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { CURRICULUM_LESSONS } from '../../services/curriculumLessons';
-import { Lesson, LessonCategory } from '../../types/teaching';
+import { Lesson } from '../../types/teaching';
 import { PlayerProfile } from '../../types/game';
+import { WORLDS } from '../../services/curriculum';
 import { storage } from '../../services/storage';
 import { sound } from '../../services/audio';
+import { ParentGuideModal } from './ParentGuideModal';
+import { getParentGuideForLesson } from '../../services/parentGuideService';
 import {
   Sparkles,
   BookOpen,
@@ -13,6 +16,7 @@ import {
   ChevronLeft,
   ArrowRight,
   Flame,
+  HeartHandshake,
 } from 'lucide-react';
 
 interface Props {
@@ -26,25 +30,41 @@ export const LessonSelectHub: React.FC<Props> = ({
   onSelectLesson,
   onReturnToMap,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<LessonCategory | 'all'>('all');
+  const [selectedChapter, setSelectedChapter] = useState<string | 'all'>('all');
+  const [previewParentGuideLesson, setPreviewParentGuideLesson] = useState<Lesson | null>(null);
   const masteryData = storage.loadMastery();
 
-  const CATEGORIES: { id: LessonCategory | 'all'; titleAr: string; icon: string }[] = [
-    { id: 'all', titleAr: 'جميع الدروس', icon: '🌟' },
-    { id: 'addition_strategies', titleAr: 'استراتيجيات الجمع', icon: '➕' },
-    { id: 'subtraction_strategies', titleAr: 'استراتيجيات الطرح', icon: '➖' },
-    { id: 'place_value_regrouping', titleAr: 'القيمة المكانية وإعادة التجميع', icon: '🧱' },
-    { id: 'story_problems', titleAr: 'المسائل الكلامية', icon: '📖' },
-    { id: 'number_patterns', titleAr: 'لوحة الـ 120 والأنماط', icon: '🔢' },
-    { id: 'time_and_measurement', titleAr: 'الوقت والقياس', icon: '⏰' },
+  const CHAPTER_TABS: { id: string; titleAr: string; icon: string }[] = [
+    { id: 'all', titleAr: 'جميع فصول الكتاب (٩ فصول)', icon: '🎒' },
+    { id: 'forest', titleAr: 'فصل ١: الرسوم البيانية', icon: '📊' },
+    { id: 'addition', titleAr: 'فصل ٢: الجمع الرأسي', icon: '➕' },
+    { id: 'subtraction', titleAr: 'فصل ٣: الطرح الرأسي', icon: '➖' },
+    { id: 'time', titleAr: 'فصل ٤: الوقت والزمن', icon: '⏰' },
+    { id: 'measurement', titleAr: 'فصل ٥: وحدات الطول', icon: '📏' },
+    { id: 'numbers', titleAr: 'فصل ٦: أعداد أكبر من ١٠٠', icon: '🧱' },
+    { id: 'capacity', titleAr: 'فصل ٧: وحدات السعة', icon: '🧪' },
+    { id: 'mixed', titleAr: 'فصل ٨: الجمع والطرح الرأسي', icon: '📝' },
+    { id: 'castle', titleAr: 'فصل ٩: طرق الحساب الذهني', icon: '🧮' },
   ];
 
-  const filteredLessons = selectedCategory === 'all'
+  const filteredLessons = selectedChapter === 'all'
     ? CURRICULUM_LESSONS
-    : CURRICULUM_LESSONS.filter((l) => l.category === selectedCategory);
+    : CURRICULUM_LESSONS.filter((l) => l.worldId === selectedChapter);
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col items-center p-3 sm:p-6 select-none text-right pb-24 animate-in fade-in duration-300">
+      {/* Parent Guide Preview Modal */}
+      {previewParentGuideLesson && (
+        <ParentGuideModal
+          titleAr={previewParentGuideLesson.titleAr}
+          guide={
+            previewParentGuideLesson.parentGuide ||
+            getParentGuideForLesson(previewParentGuideLesson.id)
+          }
+          onClose={() => setPreviewParentGuideLesson(null)}
+        />
+      )}
+
       {/* Top Header */}
       <div className="w-full flex items-center justify-between gap-3 mb-4">
         <button
@@ -64,7 +84,7 @@ export const LessonSelectHub: React.FC<Props> = ({
       </div>
 
       {/* Hero Banner */}
-      <div className="w-full bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white rounded-3xl p-6 sm:p-8 shadow-xl border-3 border-white/40 mb-6 text-right relative overflow-hidden">
+      <div className="w-full bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white rounded-3xl p-6 sm:p-8 shadow-xl border-3 border-white/40 mb-4 text-right relative overflow-hidden">
         <div className="relative z-10 space-y-2 max-w-2xl">
           <div className="inline-flex items-center gap-1.5 bg-black/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-black">
             <Sparkles className="w-4 h-4 text-amber-300" />
@@ -79,25 +99,42 @@ export const LessonSelectHub: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Categories Filter Tabs */}
+      {/* Parent Guidance Global Callout */}
+      <div className="w-full mb-6 bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-xl shrink-0 shadow-sm">
+            👨‍👧‍👦
+          </div>
+          <div>
+            <div className="text-xs sm:text-sm font-black text-emerald-950">
+              دليل أولياء الأمور: تبسيط الفكرة قبل أن يبدأ طفلك
+            </div>
+            <p className="text-[11px] sm:text-xs font-bold text-emerald-800/80">
+              اضغط على زر "شرح لولي الأمر" عند أي درس لقراءة حوار تمهيدي سريع ونشاط بيتي في دقيقة واحدة!
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Textbook Chapters Filter Tabs */}
       <div className="w-full flex items-center gap-2 overflow-x-auto pb-2 mb-6 scrollbar-none">
-        {CATEGORIES.map((cat) => {
-          const isActive = selectedCategory === cat.id;
+        {CHAPTER_TABS.map((chap) => {
+          const isActive = selectedChapter === chap.id;
           return (
             <button
-              key={cat.id}
+              key={chap.id}
               onClick={() => {
                 sound.playSfx('click');
-                setSelectedCategory(cat.id);
+                setSelectedChapter(chap.id);
               }}
-              className={`px-4 py-2 rounded-2xl text-xs font-black flex items-center gap-1.5 shrink-0 transition-all ${
+              className={`px-3.5 py-2 rounded-2xl text-xs font-black flex items-center gap-1.5 shrink-0 transition-all ${
                 isActive
                   ? 'bg-amber-600 text-white shadow-md scale-105'
                   : 'bg-white/80 hover:bg-white text-slate-700 border border-slate-200'
               }`}
             >
-              <span>{cat.icon}</span>
-              <span>{cat.titleAr}</span>
+              <span>{chap.icon}</span>
+              <span>{chap.titleAr}</span>
             </button>
           );
         })}
@@ -125,6 +162,14 @@ export const LessonSelectHub: React.FC<Props> = ({
                     {lesson.icon}
                   </div>
                   <div>
+                    {(() => {
+                      const world = WORLDS.find((w) => w.id === lesson.worldId);
+                      return world ? (
+                        <div className="inline-block text-[10px] font-black bg-blue-100 text-blue-900 px-2 py-0.5 rounded-md mb-1">
+                          الفصل {world.chapterNumber}: {world.titleAr}
+                        </div>
+                      ) : null;
+                    })()}
                     <h3 className="text-base font-black text-slate-800 group-hover:text-amber-700 transition-colors">
                       {lesson.titleAr}
                     </h3>
@@ -154,13 +199,28 @@ export const LessonSelectHub: React.FC<Props> = ({
                 </p>
               </div>
 
-              {/* Card Footer: Why Badge & Start Button */}
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                <span className="text-[11px] font-black text-amber-900 bg-amber-100 px-2.5 py-1 rounded-lg">
-                  💡 يتضمن ميزة "ليه؟" و "وريني إزاي"
-                </span>
+              {/* Card Footer: Parent Guide & Start Button */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-2 flex-wrap">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    sound.playSfx('sparkle');
+                    setPreviewParentGuideLesson(lesson);
+                  }}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-black text-xs transition active:scale-95"
+                  title="عرض نصائح وشرح لولي الأمر قبل التفاعل"
+                >
+                  <HeartHandshake className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>شرح لولي الأمر 👨‍👧‍👦</span>
+                </button>
 
-                <button className="flex items-center gap-1 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow transition group-hover:translate-x-[-4px]">
+                <button
+                  onClick={() => {
+                    sound.playSfx('click');
+                    onSelectLesson(lesson);
+                  }}
+                  className="flex items-center gap-1 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow transition group-hover:translate-x-[-4px]"
+                >
                   <span>ادخل المختبر</span>
                   <ChevronLeft className="w-4 h-4" />
                 </button>

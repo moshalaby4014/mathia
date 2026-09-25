@@ -4,6 +4,9 @@ import { GRADE_2_SKILLS, MISCONCEPTIONS_CATALOG } from '../services/curriculum';
 import { CURRICULUM_LESSONS } from '../services/curriculumLessons';
 import { storage } from '../services/storage';
 import { sound } from '../services/audio';
+import { ParentGuideModal } from './teaching/ParentGuideModal';
+import { getParentGuideForLesson } from '../services/parentGuideService';
+import { Lesson } from '../types/teaching';
 import {
   ShieldCheck,
   Clock,
@@ -15,18 +18,22 @@ import {
   RotateCcw,
   ArrowRight,
   TrendingUp,
+  HeartHandshake,
+  Printer,
 } from 'lucide-react';
 
 interface Props {
   profile: PlayerProfile;
   onClose: () => void;
   onResetProgress: () => void;
+  onOpenCertificates?: () => void;
 }
 
 export const ParentDashboard: React.FC<Props> = ({
   profile,
   onClose,
   onResetProgress,
+  onOpenCertificates,
 }) => {
   // Adult Gate State: e.g. 7 x 8 = 56
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -35,6 +42,7 @@ export const ParentDashboard: React.FC<Props> = ({
 
   // Mastery records
   const masteryData = storage.loadMastery();
+  const [selectedGuideLesson, setSelectedGuideLesson] = useState<Lesson | null>(null);
 
   const handleVerifyGate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,6 +150,18 @@ export const ParentDashboard: React.FC<Props> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm overflow-y-auto p-3 sm:p-6 select-none flex justify-center">
+      {/* Parent Coaching Guide Modal */}
+      {selectedGuideLesson && (
+        <ParentGuideModal
+          titleAr={selectedGuideLesson.titleAr}
+          guide={
+            selectedGuideLesson.parentGuide ||
+            getParentGuideForLesson(selectedGuideLesson.id)
+          }
+          onClose={() => setSelectedGuideLesson(null)}
+        />
+      )}
+
       <div className="bg-white rounded-3xl border-4 border-slate-700 shadow-2xl max-w-4xl w-full my-auto overflow-hidden flex flex-col text-right">
         {/* Header */}
         <div className="bg-slate-900 text-white p-5 sm:p-6 flex items-center justify-between">
@@ -206,6 +226,33 @@ export const ParentDashboard: React.FC<Props> = ({
             </div>
           </div>
 
+          {/* Royal Certificates Action for Parents */}
+          <div className="bg-gradient-to-r from-amber-100 via-yellow-100 to-amber-100 border-2 border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-center gap-3 text-right">
+              <div className="text-3xl">📜</div>
+              <div>
+                <h3 className="text-sm sm:text-base font-black text-amber-950">
+                  شهادات التقدير والأوسمة الملكية المستحقة للطفل
+                </h3>
+                <p className="text-xs text-amber-800 font-bold">
+                  يمكنك تخصيص اسم طفلك واختيار الختم الملكي وطباعة الشهادات الرسمية بجودة عالية A4 أو تنزيلها لمشاركتها مع العائلة والمعلمين!
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                sound.playSfx('click');
+                onClose();
+                if (onOpenCertificates) onOpenCertificates();
+              }}
+              className="game-btn-primary px-5 py-2.5 rounded-2xl text-white font-black text-xs sm:text-sm flex items-center gap-1.5 shadow whitespace-nowrap"
+            >
+              <Printer className="w-4 h-4" />
+              <span>عرض وطباعة الشهادات 📜</span>
+            </button>
+          </div>
+
           {/* Egyptian Curriculum Mastery Competencies */}
           <div className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3">
             <div className="flex items-center justify-between">
@@ -267,7 +314,7 @@ export const ParentDashboard: React.FC<Props> = ({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {CURRICULUM_LESSONS.map((lesson) => {
                 const record = masteryData[lesson.id];
                 const mastery = getMasteryColor(record?.masteryLevel);
@@ -275,23 +322,36 @@ export const ParentDashboard: React.FC<Props> = ({
                 return (
                   <div
                     key={lesson.id}
-                    className="bg-white p-2.5 rounded-xl border border-purple-200 flex items-center justify-between gap-2 text-right"
+                    className="bg-white p-3 rounded-2xl border border-purple-200 flex flex-col justify-between gap-2 text-right shadow-sm hover:border-purple-300 transition"
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{lesson.icon}</span>
-                      <div>
-                        <div className="text-xs font-black text-slate-800">
-                          {lesson.titleAr}
-                        </div>
-                        <div className="text-[10px] font-bold text-slate-400">
-                          {lesson.subtitleAr}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl p-1.5 rounded-xl bg-purple-50">{lesson.icon}</span>
+                        <div>
+                          <div className="text-xs sm:text-sm font-black text-slate-800">
+                            {lesson.titleAr}
+                          </div>
+                          <div className="text-[10px] font-bold text-slate-400">
+                            {lesson.subtitleAr}
+                          </div>
                         </div>
                       </div>
+
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border shrink-0 ${mastery.bg}`}>
+                        {mastery.label}
+                      </span>
                     </div>
 
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${mastery.bg}`}>
-                      {mastery.label}
-                    </span>
+                    <button
+                      onClick={() => {
+                        sound.playSfx('sparkle');
+                        setSelectedGuideLesson(lesson);
+                      }}
+                      className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-black transition active:scale-95"
+                    >
+                      <HeartHandshake className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>كيف تشرح هذا المفهوم لطفلك؟ (دليل سريع) 💡</span>
+                    </button>
                   </div>
                 );
               })}

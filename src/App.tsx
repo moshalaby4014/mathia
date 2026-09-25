@@ -18,6 +18,8 @@ import { MathQuestRunner } from './components/quest/MathQuestRunner';
 import { PlayerHome } from './components/PlayerHome';
 import { PetRoom } from './components/PetRoom';
 import { ParentDashboard } from './components/ParentDashboard';
+import { CertificatesHall } from './components/certificates/CertificatesHall';
+import { SelakhAlTelmeezHub } from './components/selakh/SelakhAlTelmeezHub';
 import { TeachingEngine } from './components/teaching/TeachingEngine';
 import { LessonSelectHub } from './components/teaching/LessonSelectHub';
 import { CURRICULUM_LESSONS } from './services/curriculumLessons';
@@ -113,6 +115,10 @@ export default function App() {
           profile={profile}
           onClose={() => setShowParentDashboard(false)}
           onResetProgress={handleResetProgress}
+          onOpenCertificates={() => {
+            setShowParentDashboard(false);
+            setCurrentScreen('certificates');
+          }}
         />
       )}
 
@@ -123,6 +129,7 @@ export default function App() {
         onToggleSound={handleToggleSound}
         onOpenParentGate={() => setShowParentDashboard(true)}
         onOpenAvatarCustomizer={() => setShowAvatarCustomizer(true)}
+        onOpenCertificates={() => setCurrentScreen('certificates')}
       />
 
       {/* Main Viewport Content */}
@@ -131,10 +138,25 @@ export default function App() {
           <WorldMap
             profile={profile}
             onSelectWorld={handleSelectWorld}
+            onUpdateProfile={(updated) => {
+              setProfile(updated);
+              storage.saveProfile(updated);
+            }}
             onOpenTeachingLab={() => {
               setSelectedLesson(null);
               setCurrentScreen('teaching');
             }}
+          />
+        )}
+
+        {currentScreen === 'selakh' && (
+          <SelakhAlTelmeezHub
+            profile={profile}
+            onUpdateProfile={(updated) => {
+              setProfile(updated);
+              storage.saveProfile(updated);
+            }}
+            onReturnToMap={handleReturnToMap}
           />
         )}
 
@@ -196,6 +218,18 @@ export default function App() {
               setProfile(updated);
               storage.saveProfile(updated);
             }}
+            onOpenCertificates={() => setCurrentScreen('certificates')}
+          />
+        )}
+
+        {currentScreen === 'certificates' && (
+          <CertificatesHall
+            profile={profile}
+            onUpdateProfile={(updated) => {
+              setProfile(updated);
+              storage.saveProfile(updated);
+            }}
+            onReturnToMap={handleReturnToMap}
           />
         )}
 
